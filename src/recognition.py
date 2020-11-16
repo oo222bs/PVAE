@@ -1,11 +1,6 @@
-import os
-import time
-import json
-
-import numpy as np
 import tensorflow as tf
 fc = tf.contrib.layers.fully_connected
-from IPython import embed
+
 
 from src.config import NetConfig, TrainConfig
 from src.data_util import read_sequential_target, save_latent
@@ -13,7 +8,7 @@ from src.modules import *
 
 def main():
     net_conf = NetConfig()
-    net_conf.set_conf("./net_conf.txt")
+    net_conf.set_conf("../train/net_conf.txt")
 
     L_num_units = net_conf.L_num_units
     L_num_layers = net_conf.L_num_layers
@@ -22,7 +17,7 @@ def main():
     SHARE_DIM = net_conf.S_dim
     
     train_conf = TrainConfig()
-    train_conf.set_conf("./train_conf.txt")
+    train_conf.set_conf("../train/train_conf.txt")
     
     batchsize = 1
     save_dir = train_conf.save_dir
@@ -103,9 +98,11 @@ def main():
                      placeholders["V_len"]: V_len[i:i+1]}
 
         result = sess.run([L_output], feed_dict=feed_dict)
+        save_latent(np.transpose(result[0], (1, 0, 2)), L_filenames[i], "recognition")
         r = result[0][:,0,:].argmax(axis=1)
         t = L_fw[1:,i,:].argmax(axis=1)
-        print (r == t).all()
+        print((r == t).all())
+
 
     if train_conf.test:
         print("test!!!!!!!!!!!!!!!!")
@@ -120,6 +117,7 @@ def main():
                          placeholders["L_len"]: L_len_u[i:i+1],
                          placeholders["V_len"]: V_len_u[i:i+1]}
             result = sess.run([L_output], feed_dict=feed_dict)
+            save_latent(np.transpose(result[0], (1, 0, 2)), L_filenames_u[i], "recognition")
             result = result[0][:,0,:].argmax(axis=1)
             target = L_fw_u[1:,i,:].argmax(axis=1)
             print((result == target).all())

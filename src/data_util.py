@@ -66,8 +66,10 @@ def read_sequential_target(root_path, with_filename=False, is_npy=False):
     
 def save_latent(c, name, dirname="latent"):
   dir_hierarchy = name.split("/")
+  dir_hierarchy[1] = 'prediction'
   dir_hierarchy = filter(lambda z: z != "..", dir_hierarchy)
   save_name = os.path.join(*dir_hierarchy)
+  dirname = '../train/' + dirname
   save_name = os.path.join(dirname, save_name)
   if not os.path.exists(os.path.dirname(save_name)):
     os.makedirs(os.path.dirname(save_name))

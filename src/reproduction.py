@@ -1,11 +1,5 @@
-import os
-import time
-import json
-
-import numpy as np
 import tensorflow as tf
 fc = tf.contrib.layers.fully_connected
-from IPython import embed
 
 from src.config import NetConfig, TrainConfig
 from src.data_util import read_sequential_target, save_latent
@@ -13,7 +7,7 @@ from src.modules import *
 
 def main():
     net_conf = NetConfig()
-    net_conf.set_conf("./net_conf.txt")
+    net_conf.set_conf("../train/net_conf.txt")
 
     L_num_units = net_conf.L_num_units
     L_num_layers = net_conf.L_num_layers
@@ -22,7 +16,7 @@ def main():
     SHARE_DIM = net_conf.S_dim
     
     train_conf = TrainConfig()
-    train_conf.set_conf("./train_conf.txt")
+    train_conf.set_conf("../train/train_conf.txt")
     
     batchsize = 1
     save_dir = train_conf.save_dir

@@ -24,5 +24,5 @@ $ python learn.py
 - learn.py: trains a model.
 - generation.py: translates instructions to actions.
 - recognition.py: translates actions to descriptions.
-- extract.py: extracts shared representations.
+- extraction.py: extracts shared representations.
 - reproduction.py: reproduces the actions.
