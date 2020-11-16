@@ -26,7 +26,7 @@ class NetConfig():
             value = float(value)
             setattr(self, name, value)
         else:
-            print "{} can not be changed".format(name)
+            print("{} can not be changed".format(name))
                 
     def _set_param(self, name, value):
         if hasattr(self, name):

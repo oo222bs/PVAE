@@ -12,4 +12,4 @@ V_dir: ../target/vision_train
 L_dir_test: ../target/language_test
 B_dir_test: ../target/behavior_test
 V_dir_test: ../target/vision_test
-save_dir: ./checkpoints/model
+save_dir: ../train/checkpoints/model

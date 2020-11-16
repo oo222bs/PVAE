@@ -9,8 +9,8 @@ fc = tf.contrib.layers.fully_connected
 
 from IPython import embed
 
-from config import TrainConfig
-from data_util import read_sequential_target
+from src.config import TrainConfig
+from src.data_util import read_sequential_target
 
 
 def encoder(x, length, n_units=10, n_layers=1, scope="encoder"):

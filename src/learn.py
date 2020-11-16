@@ -1,20 +1,13 @@
-import os
-import time
-import json
 
-import numpy as np
 import tensorflow as tf
 fc = tf.contrib.layers.fully_connected
-from IPython import embed
 
-from config import NetConfig, TrainConfig
-from data_util import read_sequential_target
-from task_util import *
-from modules import *
+from src.config import NetConfig, TrainConfig
+from src.modules import *
 
 def main():
     net_conf = NetConfig()
-    net_conf.set_conf("./net_conf.txt")
+    net_conf.set_conf("../train/net_conf.txt")
 
     L_num_units = net_conf.L_num_units
     L_num_layers = net_conf.L_num_layers
@@ -23,7 +16,7 @@ def main():
     SHARE_DIM = net_conf.S_dim
     
     train_conf = TrainConfig()
-    train_conf.set_conf("./train_conf.txt")
+    train_conf.set_conf("../train/train_conf.txt")
     
     seed = train_conf.seed
     batchsize = train_conf.batchsize
@@ -36,7 +29,7 @@ def main():
     B_data_dir = train_conf.B_dir
     V_data_dir = train_conf.V_dir
     L_fw, L_bw, L_bin, L_len, filenames = read_sequential_target(L_data_dir, True)
-    print len(filenames)
+    print(len(filenames))
     B_fw, B_bw, B_bin, B_len = read_sequential_target(B_data_dir)
     V_fw, V_bw, V_bin, V_len = read_sequential_target(V_data_dir)
     L_shape = L_fw.shape
@@ -48,7 +41,7 @@ def main():
         B_data_dir_test = train_conf.B_dir_test
         V_data_dir_test = train_conf.V_dir_test
         L_fw_u, L_bw_u, L_bin_u, L_len_u, filenames_u = read_sequential_target(L_data_dir_test, True)
-        print len(filenames_u)
+        print(len(filenames_u))
         B_fw_u, B_bw_u, B_bin_u, B_len_u = read_sequential_target(B_data_dir_test)
         V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(V_data_dir_test)
         L_shape_u = L_fw_u.shape
@@ -146,7 +139,7 @@ def main():
                                   share_loss,
                                   loss],
                                  feed_dict=feed_dict)
-        print "step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s)
+        print("step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s))
         if train_conf.test and (step+1) % train_conf.test_interval == 0:
             batch_idx = np.random.permutation(B_shape_u[1])[:batchsize]
             feed_dict = {placeholders["L_fw"]: L_fw_u[:, batch_idx, :],
@@ -161,12 +154,12 @@ def main():
             
             l, b, s, t = sess.run([L_loss, B_loss, share_loss, loss],
                                   feed_dict=feed_dict)
-            print "test"
-            print "step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s)
+            print("test")
+            print("step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s))
             
         if (step + 1) % train_conf.log_interval == 0:
             saver.save(sess, save_dir)
     past = time.time()
-    print past-previous
+    print(past-previous)
 if __name__ == "__main__":
     main()

@@ -7,9 +7,9 @@ import tensorflow as tf
 fc = tf.contrib.layers.fully_connected
 from IPython import embed
 
-from config import NetConfig, TrainConfig
-from data_util import read_sequential_target, save_latent
-from modules import *
+from src.config import NetConfig, TrainConfig
+from src.data_util import read_sequential_target, save_latent
+from src.modules import *
 
 def main():
     net_conf = NetConfig()
@@ -31,7 +31,7 @@ def main():
     B_data_dir = train_conf.B_dir
     V_data_dir = train_conf.V_dir
     L_fw, L_bw, L_bin, L_len, L_filenames = read_sequential_target(L_data_dir, True)
-    print len(L_filenames)
+    print(len(L_filenames))
     B_fw, B_bw, B_bin, B_len, B_filenames = read_sequential_target(B_data_dir, True)
     V_fw, V_bw, V_bin, V_len = read_sequential_target(V_data_dir)
     L_shape = L_fw.shape
@@ -44,7 +44,7 @@ def main():
         B_data_dir_test = train_conf.B_dir_test
         V_data_dir_test = train_conf.V_dir_test
         L_fw_u, L_bw_u, L_bin_u, L_len_u, L_filenames_u = read_sequential_target(L_data_dir_test, True)
-        print len(L_filenames_u)
+        print(len(L_filenames_u))
         B_fw_u, B_bw_u, B_bin_u, B_len_u, B_filenames_u = read_sequential_target(B_data_dir_test, True)
         V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(V_data_dir_test)
         L_shape_u = L_fw_u.shape
@@ -108,7 +108,7 @@ def main():
         print (r == t).all()
 
     if train_conf.test:
-        print "test!!!!!!!!!!!!!!!!"
+        print("test!!!!!!!!!!!!!!!!")
         for i in range(B_shape_u[1]):
             feed_dict = {placeholders["L_fw"]: L_fw_u[:, i:i+1, :],
                          placeholders["B_fw"]: B_fw_u[:, i:i+1, :],
@@ -122,7 +122,7 @@ def main():
             result = sess.run([L_output], feed_dict=feed_dict)
             result = result[0][:,0,:].argmax(axis=1)
             target = L_fw_u[1:,i,:].argmax(axis=1)
-            print (result == target).all()
+            print((result == target).all())
 
 if __name__ == "__main__":
     main()
