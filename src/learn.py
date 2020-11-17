@@ -2,8 +2,8 @@
 import tensorflow as tf
 fc = tf.contrib.layers.fully_connected
 
-from src.config import NetConfig, TrainConfig
-from src.modules import *
+from config import NetConfig, TrainConfig
+from modules import *
 
 def main():
     net_conf = NetConfig()

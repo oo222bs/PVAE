@@ -2,9 +2,9 @@ import tensorflow as tf
 fc = tf.contrib.layers.fully_connected
 
 
-from src.config import NetConfig, TrainConfig
-from src.data_util import read_sequential_target, save_latent
-from src.modules import *
+from config import NetConfig, TrainConfig
+from data_util import read_sequential_target, save_latent
+from modules import *
 
 def main():
     net_conf = NetConfig()
