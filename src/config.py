@@ -1,5 +1,6 @@
 #! -*- coding:utf-8 -*-
 
+# Network configuration class
 class NetConfig():
     def __init__(self):
         self.L_num_units = 10
@@ -42,7 +43,7 @@ class NetConfig():
             self._set_param(key, value)
             line = f.readline()[:-1]
 
-            
+# Training configuration class
 class TrainConfig():
     def __init__(self):
         self.seed = None
@@ -56,11 +57,14 @@ class TrainConfig():
         self.L_dir = "./data/"
         self.B_dir = "./data/"
         self.V_dir = "./data/"
+        self.IM_dir = "./data/"
         self.L_dir_test = None
         self.B_dir_test = None
         self.V_dir_test = None
+        self.IM_dir_test = None
         self.feature_dir = None
         self.save_dir = "./checkpoints/"
+        self.cae_save_dir = "./cae_checkpoints/"
         self.gpu_use_rate = 0.8
         
     def _setattr(self, name, value):

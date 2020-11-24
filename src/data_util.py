@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from IPython import embed
 
+# get the dataset files
 def get_file_list(path):
   all_file_list = []
   dir_list = []
@@ -18,6 +19,7 @@ def get_file_list(path):
     all_file_list.append(file_list)
   return all_file_list, dir_list
 
+# read the dataset txt files
 def read_sequential_target(root_path, with_filename=False, is_npy=False):
   all_file_list, _ = get_file_list(root_path)
   all_file_list.sort()
@@ -63,7 +65,8 @@ def read_sequential_target(root_path, with_filename=False, is_npy=False):
     return fw, bw, binary, length, filenames
   else:
     return fw, bw, binary, length
-    
+
+# save the binding layer features as txt files
 def save_latent(c, name, dirname="latent"):
   dir_hierarchy = name.split("/")
   dir_hierarchy[1] = 'prediction'

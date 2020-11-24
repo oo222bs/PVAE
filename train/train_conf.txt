@@ -9,7 +9,10 @@ gpu_use_rate: 0.40
 L_dir: ../target/language_train
 B_dir: ../target/behavior_train
 V_dir: ../target/vision_train
+IM_dir: ../target/image_train
 L_dir_test: ../target/language_test
 B_dir_test: ../target/behavior_test
 V_dir_test: ../target/vision_test
+IM_dir_test: ../target/image_test
 save_dir: ../train/checkpoints/model
+cae_save_dir: ../train/cae_checkpoints/model
