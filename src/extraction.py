@@ -17,12 +17,12 @@ def main():
     VB_num_layers = net_conf.VB_num_layers
     SHARE_DIM = net_conf.S_dim
 
-    # get the training configuration (batch size, initialisation, epoch number, saving and loading directory)
+    # get the training configuration (batch size, initialisation, number of iterations, saving and loading directory)
     train_conf = TrainConfig()
     train_conf.set_conf("../train/train_conf.txt")
     seed = train_conf.seed
     batchsize = 1
-    epoch = train_conf.epoch
+    num_of_iterations = train_conf.num_of_iterations
     save_dir = train_conf.save_dir
 
     # get the dataset folders

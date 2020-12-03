@@ -29,7 +29,7 @@ def read_input_folder(images_path):
         for i, image in enumerate(file_list):
             original_image = Image.open(image)
             resized_image = original_image.resize((160, 120))
-            resized_image_arr = np.asarray(resized_image, np.float)
+            resized_image_arr = np.asarray(resized_image, np.float) / 255.0
             resized_images.append(resized_image_arr)
         if num_of_images > max_len:
             max_len = num_of_images
@@ -37,7 +37,7 @@ def read_input_folder(images_path):
             all_resized_images = np.concatenate((all_resized_images, add_zeros), axis=1)
         all_resized_images[count] = np.asarray(resized_images)
         count += 1
-    return all_resized_images
+    return [all_resized_images, all_file_list]
 
 # Convolution
 def conv_encoder(x, scope="conv_encoder"):
@@ -74,7 +74,7 @@ def extract_visual_features():
     train_conf.set_conf("../train/train_conf.txt")
 
     im_data_dir = "../target/image_train"
-    resized_input = read_input_folder(im_data_dir)
+    resized_input, _ = read_input_folder(im_data_dir)
     batchsize = 1
     placeholder = tf.placeholder(tf.float32, [resized_input.shape[1], resized_input.shape[2],
                                               resized_input.shape[3], resized_input.shape[4]],
@@ -107,15 +107,59 @@ def extract_visual_features():
             os.makedirs(os.path.dirname(save_name))
         np.savetxt(save_name, result, fmt="%.6f")
 
-        #save_latent(np.transpose(result, (1, 0, 2)), B_filenames[i], "visual_feature_extraction")  # save the predicted actions
+        #save_latent(np.transpose(result, (1, 0, 2)), B_filenames[i], "visual_feature_extraction")  # save the features
+
+# Reconstruct images
+def reconstruct():
+    # get the training configuration
+    train_conf = TrainConfig()
+    train_conf.set_conf("../train/train_conf.txt")
+
+    im_data_dir = train_conf.IM_dir_test
+    resized_input, filenames = read_input_folder(im_data_dir)
+    batchsize = 1
+    placeholder = tf.placeholder(tf.float32, [batchsize, resized_input.shape[2],
+                                              resized_input.shape[3], resized_input.shape[4]],
+                                 name="input_images")
+    # Model pipeline
+    convolved = conv_encoder(placeholder)     # Encoder block with convolutions
+    _, dense = dense_layers(convolved)    # Bottleneck with fully connected layers
+    output = deconv_decoder(dense)     # Decoder block with deconvolutions
+    # Use GPU
+    gpuConfig = tf.ConfigProto(
+        gpu_options=tf.GPUOptions(allow_growth=True,
+                                  per_process_gpu_memory_fraction=0.4),
+        device_count={'GPU': 1})
+
+    sess = tf.Session(config=gpuConfig)        # Launch the graph in a session
+    sess.run(tf.global_variables_initializer())        # run the session
+    saver = tf.train.Saver(tf.global_variables())      # create a saver for the model
+    saver.restore(sess, train_conf.cae_save_dir)         # restore previously saved variables
+
+    # Feed the dataset as input
+    for i in range(resized_input.shape[1]):
+        feed_dict = {placeholder: resized_input[:, i, :, :, :]}
+        result = sess.run(output, feed_dict=feed_dict)   # run the session
+        image_name = filenames[0][i].split(os.path.sep)[-1]
+        name = "../train/20201123_Embodied_Language_Learning-Nico2Blocks_test/reconstructed/" + image_name
+        #name = "../train/20201123_Embodied_Language_Learning-Nico2Blocks_test/reconstructed/"+'%04d' % (i+1) + ".png"
+        dir_hierarchy = name.split("/")
+        dir_hierarchy = filter(lambda z: z != "..", dir_hierarchy)
+        save_name = os.path.join(*dir_hierarchy)
+        #dirname = '../train/' + dirname
+        save_name = os.path.join("..", save_name)
+        if not os.path.exists(os.path.dirname(save_name)):
+            os.makedirs(os.path.dirname(save_name))
+        reconstructed_im = Image.fromarray(np.uint8(result[0]*255))
+        reconstructed_im.save(save_name)
 
 def main():
     # get the training configuration
     train_conf = TrainConfig()
     train_conf.set_conf("../train/train_conf.txt")
     seed = train_conf.seed
-    batchsize = 32
-    epoch = train_conf.epoch
+    batchsize = train_conf.batchsize
+    num_of_iterations = train_conf.num_of_iterations
     # set the save directory for the model
     save_dir = train_conf.cae_save_dir
     if not os.path.exists(os.path.dirname(save_dir)):
@@ -123,13 +167,13 @@ def main():
 
     # get the dataset folder
     im_data_dir = train_conf.IM_dir
-    resized_input = read_input_folder(im_data_dir)
+    resized_input, _ = read_input_folder(im_data_dir)
     resized_input_batch = resized_input.reshape(resized_input.shape[0]*resized_input.shape[1],
                                      resized_input.shape[2], resized_input.shape[3], resized_input.shape[4])
     # get the dataset folder for testing
     if train_conf.test:
         im_data_dir_test = train_conf.IM_dir_test            # get the folder for test language descriptions
-        resized_input_test = read_input_folder(im_data_dir_test)
+        resized_input_test, _ = read_input_folder(im_data_dir_test)
         resized_input_test_batch = resized_input_test.reshape(resized_input_test.shape[0]*resized_input_test.shape[1],
                                      resized_input_test.shape[2], resized_input_test.shape[3], resized_input_test.shape[4])
     # Random Initialisation
@@ -168,7 +212,7 @@ def main():
 
     # Training
     previous = time.time()  # time the training
-    for step in range(epoch):
+    for step in range(num_of_iterations):
         batch_idx = np.random.permutation(resized_input_batch.shape[0])[:batchsize]
         feed_dict = {placeholder: resized_input_batch[batch_idx,:, :, :]}
 
@@ -191,5 +235,6 @@ def main():
     print(past-previous)     # print the elapsed time
 
 if __name__ == "__main__":
-    #main()
-    extract_visual_features()
+    main()
+    #reconstruct()
+    #extract_visual_features()

@@ -1,6 +1,6 @@
 seed: 1
-test: 0
-epoch: 2000
+test: 1
+num_of_iterations: 5000
 log_interval: 2500
 test_interval: 100
 learning_rate: 0.001
@@ -10,9 +10,9 @@ L_dir: ../target/language_train
 B_dir: ../target/behavior_train
 V_dir: ../target/vision_train
 IM_dir: ../train/20201123_Embodied_Language_Learning-Nico2Blocks
+IM_dir_test: ../train/20201123_Embodied_Language_Learning-Nico2Blocks_test
 L_dir_test: ../target/language_test
 B_dir_test: ../target/behavior_test
 V_dir_test: ../target/vision_test
-IM_dir_test: ../target/image_test
 save_dir: ../train/checkpoints/model
 cae_save_dir: ../train/cae_checkpoints/model

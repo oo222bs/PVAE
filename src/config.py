@@ -48,7 +48,7 @@ class TrainConfig():
     def __init__(self):
         self.seed = None
         self.test = 0
-        self.epoch = 100
+        self.num_of_iterations = 100
         self.log_interval = 10
         self.test_interval = 10
         self.learning_rate = 0.001
@@ -68,7 +68,7 @@ class TrainConfig():
         self.gpu_use_rate = 0.8
         
     def _setattr(self, name, value):
-        if name in ["seed", "test", "epoch",
+        if name in ["seed", "test", "num_of_iterations",
                     "log_interval", "test_interval",
                     "batchsize"]:
             value = int(value)

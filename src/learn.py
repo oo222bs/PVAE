@@ -15,12 +15,12 @@ def main():
     VB_num_layers = net_conf.VB_num_layers
     SHARE_DIM = net_conf.S_dim
 
-    # get the training configuration (batch size, initialisation, epoch number, saving and loading directory)
+    # get the training configuration (batch size, initialisation, num_of_iterations number, saving and loading directory)
     train_conf = TrainConfig()
     train_conf.set_conf("../train/train_conf.txt")
     seed = train_conf.seed
     batchsize = train_conf.batchsize
-    epoch = train_conf.epoch
+    num_of_iterations = train_conf.num_of_iterations
     save_dir = train_conf.save_dir
     if not os.path.exists(os.path.dirname(save_dir)):
         os.mkdir(os.path.dirname(save_dir))
@@ -143,7 +143,7 @@ def main():
 
     # Training
     previous = time.time()      # time the training
-    for step in range(epoch):
+    for step in range(num_of_iterations):
         batch_idx = np.random.permutation(B_shape[1])[:batchsize]
         feed_dict = {placeholders["L_fw"]: L_fw[:, batch_idx, :],
                      placeholders["B_fw"]: B_fw[:, batch_idx, :],
