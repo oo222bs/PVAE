@@ -133,7 +133,7 @@ def VB_decoder(V_in, init_B_in, init_state, length, out_dim,
     y = tf.stack(y)               # stack the outputs
     return y               # return the outputs
 
-# Create a placeholder for each description, action or visual tensor (fw: right order, bw: inverse order, bin: binary)
+# Create a placeholder for each description, action or visual tensor (fw: right order, bw: reverse, bin: binary)
 def make_placeholders(L_shape, B_shape, V_shape, batchsize):
     place_holders = {}
     place_holders["L_fw"] = tf.placeholder(tf.float32, [L_shape[0], batchsize, L_shape[2]], name="L_fw")

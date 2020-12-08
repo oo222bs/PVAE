@@ -34,8 +34,14 @@ def main():
 
     # get the joint angles for actions
     B_fw, B_bw, B_bin, B_len, B_filenames = read_sequential_target(B_data_dir, True)
+    # normalise the joint angles between -1 and 1
+    B_fw = 2 * ((B_fw - B_fw.min())/(B_fw.max()-B_fw.min())) - 1
+    B_bw = 2 * ((B_bw - B_bw.min()) / (B_bw.max() - B_bw.min())) - 1
     # get the visual features for action images
     V_fw, V_bw, V_bin, V_len = read_sequential_target(V_data_dir)
+    # normalise the visual features between -1 and 1
+    V_fw = 2 * ((V_fw - V_fw.min()) / (V_fw.max()-V_fw.min())) - 1
+    V_bw = 2 * ((V_bw - V_bw.min()) / (V_bw.max() - V_bw.min())) - 1
     # create variables for data shapes
     L_shape = L_fw.shape
     B_shape = B_fw.shape
@@ -49,7 +55,13 @@ def main():
         L_fw_u, L_bw_u, L_bin_u, L_len_u, L_filenames_u = read_sequential_target(L_data_dir_test, True)
         print(len(L_filenames_u))
         B_fw_u, B_bw_u, B_bin_u, B_len_u, B_filenames_u = read_sequential_target(B_data_dir_test, True)
+        # normalise the joint angles between -1 and 1
+        B_fw_u = 2 * ((B_fw_u - B_fw_u.min()) / (B_fw_u.max() - B_fw_u.min())) - 1
+        B_bw_u = 2 * ((B_bw_u - B_bw_u.min()) / (B_bw_u.max() - B_bw_u.min())) - 1
         V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(V_data_dir_test)
+        # normalise the visual features between -1 and 1
+        V_fw_u = 2 * ((V_fw_u - V_fw_u.min()) / (V_fw_u.max() - V_fw_u.min())) - 1
+        V_bw_u = 2 * ((V_bw_u - V_bw_u.min()) / (V_bw_u.max() - V_bw_u.min())) - 1
         L_shape_u = L_fw_u.shape
         B_shape_u = B_fw_u.shape
         V_shape_u = V_fw_u.shape

@@ -35,17 +35,17 @@ def read_input_folder(images_path):
             max_len = num_of_images
             add_zeros = np.zeros((all_resized_images.shape[0],max_len-all_resized_images.shape[1], 120, 160, 3))
             all_resized_images = np.concatenate((all_resized_images, add_zeros), axis=1)
-        all_resized_images[count] = np.asarray(resized_images)
+        all_resized_images[count][:len(resized_images)] = np.asarray(resized_images)
         count += 1
     return [all_resized_images, all_file_list]
 
 # Convolution
 def conv_encoder(x, scope="conv_encoder"):
     with tf.variable_scope(scope, reuse=False):
-        first_conv = tf.layers.conv2d(x, 8, 4, 2, padding='same', name="enc_conv1")
-        second_conv = tf.layers.conv2d(first_conv, 16, 4, 2, padding='same', name="enc_conv2")
-        third_conv = tf.layers.conv2d(second_conv, 32, 4, 2, padding='same', name="enc_conv3")
-        fourth_conv = tf.layers.conv2d(third_conv, 64, 8, 5, padding='same', name="enc_conv4")
+        first_conv = tf.layers.conv2d(x, 8, 4, 2, padding='same', activation=tf.nn.relu, name="enc_conv1")
+        second_conv = tf.layers.conv2d(first_conv, 16, 4, 2, padding='same', activation=tf.nn.relu, name="enc_conv2")
+        third_conv = tf.layers.conv2d(second_conv, 32, 4, 2, padding='same', activation=tf.nn.relu, name="enc_conv3")
+        fourth_conv = tf.layers.conv2d(third_conv, 64, 8, 5, padding='same', activation=tf.nn.relu, name="enc_conv4")
     return fourth_conv
 
 # Fully connected layers (Bottleneck)
@@ -62,19 +62,20 @@ def dense_layers(enc):
 def deconv_decoder(dense, scope="deconv_decoder"):
     with tf.variable_scope(scope, reuse=False):
         reshaped = tf.reshape(dense, (dense.shape[0], 3, 4, -1))     # Reshape it back to 3D before deconvolution
-        first_deconv = tf.layers.conv2d_transpose(reshaped, 32, 8, 5, padding='same', name="dec_conv1")
-        second_deconv = tf.layers.conv2d_transpose(first_deconv, 16, 4, 2, padding='same', name="dec_conv2")
-        third_deconv = tf.layers.conv2d_transpose(second_deconv, 8, 4, 2, padding='same', name="dec_conv3")
-        output = tf.layers.conv2d_transpose(third_deconv, 3, 4, 2, padding='same', name="dec_conv4_output")
+        first_deconv = tf.layers.conv2d_transpose(reshaped, 32, 8, 5, padding='same', activation=tf.nn.relu, name="dec_conv1")
+        second_deconv = tf.layers.conv2d_transpose(first_deconv, 16, 4, 2, padding='same', activation=tf.nn.relu, name="dec_conv2")
+        third_deconv = tf.layers.conv2d_transpose(second_deconv, 8, 4, 2, padding='same', activation=tf.nn.relu, name="dec_conv3")
+        output = tf.layers.conv2d_transpose(third_deconv, 3, 4, 2, padding='same', activation=tf.nn.sigmoid, name="dec_conv4_output")
     return output
 
+# Extract 10 dimensional visual features from images
 def extract_visual_features():
     # get the training configuration
     train_conf = TrainConfig()
     train_conf.set_conf("../train/train_conf.txt")
 
-    im_data_dir = "../target/image_train"
-    resized_input, _ = read_input_folder(im_data_dir)
+    im_data_dir = "../target/image_test"
+    resized_input, filenames = read_input_folder(im_data_dir)
     batchsize = 1
     placeholder = tf.placeholder(tf.float32, [resized_input.shape[1], resized_input.shape[2],
                                               resized_input.shape[3], resized_input.shape[4]],
@@ -90,14 +91,15 @@ def extract_visual_features():
 
     sess = tf.Session(config=gpuConfig)        # Launch the graph in a session
     sess.run(tf.global_variables_initializer())        # run the session
-    #saver = tf.train.Saver(tf.global_variables())      # create a saver for the model
-    #saver.restore(sess, train_conf.cae_save_dir)         # restore previously saved variables
+    saver = tf.train.Saver(tf.global_variables())      # create a saver for the model
+    saver.restore(sess, train_conf.cae_save_dir)         # restore previously saved variables
 
     # Feed the dataset as input
     for i in range(resized_input.shape[0]):
         feed_dict = {placeholder: resized_input[i, :, :, :, :]}
         result = sess.run(visual_features, feed_dict=feed_dict)    # run the session
-        name = "../train/visual_feature_extraction/171107/target"+'%06d' % i + ".txt"
+        filename = filenames[i][0].split(os.path.sep)[-2]
+        name = "../train/visual_feature_extraction/171107/"+ filename + ".txt"
         dir_hierarchy = name.split("/")
         dir_hierarchy = filter(lambda z: z != "..", dir_hierarchy)
         save_name = os.path.join(*dir_hierarchy)
@@ -105,7 +107,7 @@ def extract_visual_features():
         save_name = os.path.join("..", save_name)
         if not os.path.exists(os.path.dirname(save_name)):
             os.makedirs(os.path.dirname(save_name))
-        np.savetxt(save_name, result, fmt="%.6f")
+        np.savetxt(save_name, result[:len(filenames[i])], fmt="%.6f")
 
         #save_latent(np.transpose(result, (1, 0, 2)), B_filenames[i], "visual_feature_extraction")  # save the features
 
@@ -142,11 +144,9 @@ def reconstruct():
         result = sess.run(output, feed_dict=feed_dict)   # run the session
         image_name = filenames[0][i].split(os.path.sep)[-1]
         name = "../train/20201123_Embodied_Language_Learning-Nico2Blocks_test/reconstructed/" + image_name
-        #name = "../train/20201123_Embodied_Language_Learning-Nico2Blocks_test/reconstructed/"+'%04d' % (i+1) + ".png"
         dir_hierarchy = name.split("/")
         dir_hierarchy = filter(lambda z: z != "..", dir_hierarchy)
         save_name = os.path.join(*dir_hierarchy)
-        #dirname = '../train/' + dirname
         save_name = os.path.join("..", save_name)
         if not os.path.exists(os.path.dirname(save_name)):
             os.makedirs(os.path.dirname(save_name))
@@ -235,6 +235,6 @@ def main():
     print(past-previous)     # print the elapsed time
 
 if __name__ == "__main__":
-    main()
+    #main()
     #reconstruct()
-    #extract_visual_features()
+    extract_visual_features()

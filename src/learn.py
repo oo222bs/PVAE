@@ -31,14 +31,18 @@ def main():
 
     # get the descriptions
     L_fw, L_bw, L_bin, L_len, filenames = read_sequential_target(L_data_dir, True)
-    print("Number of training patterns (x6): ", len(filenames))     # print the number of training descriptions times six (actions recorded six times)
+    print("Number of training patterns: ", len(filenames))     # print the number of training descriptions times six (actions recorded six times)
 
     # get the joint angles for actions
     B_fw, B_bw, B_bin, B_len = read_sequential_target(B_data_dir)
-
+    # normalise the joint angles between -1 and 1
+    B_fw = 2 * ((B_fw - B_fw.min())/(B_fw.max()-B_fw.min())) - 1
+    B_bw = 2 * ((B_bw - B_bw.min()) / (B_bw.max() - B_bw.min())) - 1
     # get the visual features for action images
     V_fw, V_bw, V_bin, V_len = read_sequential_target(V_data_dir)
-
+    # normalise the visual features between -1 and 1
+    V_fw = 2 * ((V_fw - V_fw.min()) / (V_fw.max()-V_fw.min())) - 1
+    V_bw = 2 * ((V_bw - V_bw.min()) / (V_bw.max() - V_bw.min())) - 1
     # create variables for data shapes
     L_shape = L_fw.shape
     B_shape = B_fw.shape
@@ -50,9 +54,15 @@ def main():
         B_data_dir_test = train_conf.B_dir_test            # get the folder for test action joint angles
         V_data_dir_test = train_conf.V_dir_test            # get the folder for test visual features
         L_fw_u, L_bw_u, L_bin_u, L_len_u, filenames_u = read_sequential_target(L_data_dir_test, True)     # get test descriptions
-        print("Number of testing patterns (x6): ", len(filenames_u))                # print the number of test descriptions times six (actions recorded six times)
+        print("Number of testing patterns: ", len(filenames_u))                # print the number of test descriptions times six (actions recorded six times)
         B_fw_u, B_bw_u, B_bin_u, B_len_u = read_sequential_target(B_data_dir_test)    # get the joint angles for test actions
+        # normalise the joint angles between -1 and 1
+        B_fw_u = 2 * ((B_fw_u - B_fw_u.min()) / (B_fw_u.max() - B_fw_u.min())) - 1
+        B_bw_u = 2 * ((B_bw_u - B_bw_u.min()) / (B_bw_u.max() - B_bw_u.min())) - 1
         V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(V_data_dir_test)    # get the visual features for test actions
+        # normalise the visual features between -1 and 1
+        V_fw_u = 2 * ((V_fw_u - V_fw_u.min()) / (V_fw_u.max() - V_fw_u.min())) - 1
+        V_bw_u = 2 * ((V_bw_u - V_bw_u.min()) / (V_bw_u.max() - V_bw_u.min())) - 1
         L_shape_u = L_fw_u.shape
         B_shape_u = B_fw_u.shape
         V_shape_u = V_fw_u.shape
@@ -67,14 +77,17 @@ def main():
     placeholders = make_placeholders(L_shape, B_shape, V_shape, batchsize)
 
     # Encoding
-    # Get the final language state by feeding the encoder with descriptions
+    # Get the final language state by feeding the encoder with descriptions (in the reverse order)
+    # Reversing the input description introduces many short term dependencies between the source
+    # and the target sentence which makes the optimisation problem easier (Sutskever et al. 2014)
     L_enc_final_state = encoder(placeholders["L_bw"],
                                 placeholders["L_len"],
                                 n_units=L_num_units,
                                 n_layers=L_num_layers,
                                 scope="L_encoder")
 
-    # Concatenate the joint angles with visual features
+    # Concatenate the joint angles with visual features (reverse order)
+    # the LSTM learns much better when the input is reversed
     VB_input = tf.concat([placeholders["V_bw"],
                           placeholders["B_bw"]],
                          axis=2)
@@ -119,12 +132,14 @@ def main():
     with tf.name_scope('loss'):
         L_output = L_output # no need to multiply binary array
         B_output = B_output * placeholders["B_bin"][1:]
-        L_loss = tf.reduce_mean(-tf.reduce_sum(placeholders["L_fw"][1:]*tf.log(L_output),    # decription loss
+        L_loss = tf.reduce_mean(-tf.reduce_sum(placeholders["L_fw"][1:]*tf.log(L_output),    # description loss
                                                reduction_indices=[2])) 
-        B_loss = tf.reduce_mean(tf.square(B_output-placeholders["B_fw"][1:]))           # action loss
+        B_loss = tf.reduce_mean(tf.square(B_output-placeholders["B_fw"][1:]))           # action loss (MSE)
         share_loss = aligned_discriminative_loss(L_shared, VB_shared)                   # binding loss
         loss = net_conf.L_weight*L_loss + net_conf.B_weight*B_loss + net_conf.S_weight*share_loss   # total loss
 
+    loss_sum = tf.summary.scalar('Loss', loss)  # Loss summary to write to Tensorboard
+    test_loss = tf.summary.scalar('Test Loss', loss)  # Test loss summary to write to Tensorboard
     # Graph for update operations
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
@@ -135,6 +150,9 @@ def main():
         gpu_options=tf.GPUOptions(allow_growth=True,
                                   per_process_gpu_memory_fraction=train_conf.gpu_use_rate),
         device_count={'GPU': 1})
+
+    # Initialise the file writer for Tensorboard
+    writer = tf.summary.FileWriter('.././logs')
 
     # Launch the graph in a session
     sess = tf.Session(config=gpuConfig)
@@ -155,13 +173,14 @@ def main():
                      placeholders["L_len"]: L_len[batch_idx],
                      placeholders["V_len"]: V_len[batch_idx]}
                     
-        _, l, b, s, t = sess.run([train_step,
+        _, l, b, s, t, l_sum = sess.run([train_step,
                                   L_loss,
                                   B_loss,
                                   share_loss,
-                                  loss],
+                                  loss, loss_sum],
                                  feed_dict=feed_dict)
         print("step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s))
+        writer.add_summary(l_sum, step)
         # Do the same for the test set
         if train_conf.test and (step+1) % train_conf.test_interval == 0:
             batch_idx = np.random.permutation(B_shape_u[1])[:batchsize]
@@ -175,13 +194,15 @@ def main():
                          placeholders["L_len"]: L_len_u[batch_idx],
                          placeholders["V_len"]: V_len_u[batch_idx]}
             
-            l, b, s, t = sess.run([L_loss, B_loss, share_loss, loss],
+            l, b, s, t, t_loss = sess.run([L_loss, B_loss, share_loss, loss, test_loss],
                                   feed_dict=feed_dict)
             print("test")
             print("step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s))
-            
+            writer.add_summary(t_loss, step)
         if (step + 1) % train_conf.log_interval == 0:
             saver.save(sess, save_dir)
+    writer.flush()
+    writer.close()
     past = time.time()
     print(past-previous)     # print the elapsed time
 if __name__ == "__main__":
