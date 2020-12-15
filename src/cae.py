@@ -74,7 +74,7 @@ def extract_visual_features():
     train_conf = TrainConfig()
     train_conf.set_conf("../train/train_conf.txt")
 
-    im_data_dir = "../target/image_test"
+    im_data_dir = "../target/image_train"
     resized_input, filenames = read_input_folder(im_data_dir)
     batchsize = 1
     placeholder = tf.placeholder(tf.float32, [resized_input.shape[1], resized_input.shape[2],

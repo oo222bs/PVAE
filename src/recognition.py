@@ -53,7 +53,7 @@ def main():
         B_data_dir_test = train_conf.B_dir_test
         V_data_dir_test = train_conf.V_dir_test
         L_fw_u, L_bw_u, L_bin_u, L_len_u, L_filenames_u = read_sequential_target(L_data_dir_test, True)
-        print(len(L_filenames_u))
+        #print(len(L_filenames_u))
         B_fw_u, B_bw_u, B_bin_u, B_len_u, B_filenames_u = read_sequential_target(B_data_dir_test, True)
         # normalise the joint angles between -1 and 1
         B_fw_u = 2 * ((B_fw_u - B_fw_u.min()) / (B_fw_u.max() - B_fw_u.min())) - 1
