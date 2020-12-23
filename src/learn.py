@@ -143,7 +143,7 @@ def main():
     # Graph for update operations
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)       # Use Adam Optimiser
+        train_step = tf.train.AdamOptimizer(learning_rate=train_conf.learning_rate).minimize(loss)       # Use Adam Optimiser
 
     # Use GPU
     gpuConfig = tf.ConfigProto(
