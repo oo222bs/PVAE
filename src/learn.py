@@ -1,9 +1,10 @@
-
 import tensorflow as tf
+
 fc = tf.contrib.layers.fully_connected
 
 from config import NetConfig, TrainConfig
 from modules import *
+
 
 def main():
     # get the network configuration (parameters such as number of layers and units)
@@ -31,17 +32,18 @@ def main():
 
     # get the descriptions
     L_fw, L_bw, L_bin, L_len, filenames = read_sequential_target(L_data_dir, True)
-    print("Number of training patterns: ", len(filenames))     # print the number of training descriptions times six (actions recorded six times)
+    print("Number of training patterns: ",
+          len(filenames))  # print the number of training descriptions times six (actions recorded six times)
 
     # get the joint angles for actions
     B_fw, B_bw, B_bin, B_len = read_sequential_target(B_data_dir)
     # normalise the joint angles between -1 and 1
-    B_fw = 2 * ((B_fw - B_fw.min())/(B_fw.max()-B_fw.min())) - 1
+    B_fw = 2 * ((B_fw - B_fw.min()) / (B_fw.max() - B_fw.min())) - 1
     B_bw = 2 * ((B_bw - B_bw.min()) / (B_bw.max() - B_bw.min())) - 1
     # get the visual features for action images
     V_fw, V_bw, V_bin, V_len = read_sequential_target(V_data_dir)
     # normalise the visual features between -1 and 1
-    V_fw = 2 * ((V_fw - V_fw.min()) / (V_fw.max()-V_fw.min())) - 1
+    V_fw = 2 * ((V_fw - V_fw.min()) / (V_fw.max() - V_fw.min())) - 1
     V_bw = 2 * ((V_bw - V_bw.min()) / (V_bw.max() - V_bw.min())) - 1
     # create variables for data shapes
     L_shape = L_fw.shape
@@ -50,16 +52,20 @@ def main():
 
     # go through every step for testing data
     if train_conf.test:
-        L_data_dir_test = train_conf.L_dir_test            # get the folder for test language descriptions
-        B_data_dir_test = train_conf.B_dir_test            # get the folder for test action joint angles
-        V_data_dir_test = train_conf.V_dir_test            # get the folder for test visual features
-        L_fw_u, L_bw_u, L_bin_u, L_len_u, filenames_u = read_sequential_target(L_data_dir_test, True)     # get test descriptions
-        print("Number of testing patterns: ", len(filenames_u))                # print the number of test descriptions times six (actions recorded six times)
-        B_fw_u, B_bw_u, B_bin_u, B_len_u = read_sequential_target(B_data_dir_test)    # get the joint angles for test actions
+        L_data_dir_test = train_conf.L_dir_test  # get the folder for test language descriptions
+        B_data_dir_test = train_conf.B_dir_test  # get the folder for test action joint angles
+        V_data_dir_test = train_conf.V_dir_test  # get the folder for test visual features
+        L_fw_u, L_bw_u, L_bin_u, L_len_u, filenames_u = read_sequential_target(L_data_dir_test,
+                                                                               True)  # get test descriptions
+        print("Number of testing patterns: ",
+              len(filenames_u))  # print the number of test descriptions times six (actions recorded six times)
+        B_fw_u, B_bw_u, B_bin_u, B_len_u = read_sequential_target(
+            B_data_dir_test)  # get the joint angles for test actions
         # normalise the joint angles between -1 and 1
         B_fw_u = 2 * ((B_fw_u - B_fw_u.min()) / (B_fw_u.max() - B_fw_u.min())) - 1
         B_bw_u = 2 * ((B_bw_u - B_bw_u.min()) / (B_bw_u.max() - B_bw_u.min())) - 1
-        V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(V_data_dir_test)    # get the visual features for test actions
+        V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(
+            V_data_dir_test)  # get the visual features for test actions
         # normalise the visual features between -1 and 1
         V_fw_u = 2 * ((V_fw_u - V_fw_u.min()) / (V_fw_u.max() - V_fw_u.min())) - 1
         V_bw_u = 2 * ((V_bw_u - V_bw_u.min()) / (V_bw_u.max() - V_bw_u.min())) - 1
@@ -70,8 +76,8 @@ def main():
     # Random Initialisation
     np.random.seed(seed)
 
-    tf.reset_default_graph()            # Clear the default graph stack and reset the global default graph
-    tf.set_random_seed(seed)            # Set the graph-level random seed
+    tf.reset_default_graph()  # Clear the default graph stack and reset the global default graph
+    tf.set_random_seed(seed)  # Set the graph-level random seed
 
     # Create a placeholder dictionary for tensors
     placeholders = make_placeholders(L_shape, B_shape, V_shape, batchsize)
@@ -94,32 +100,34 @@ def main():
 
     # Get the final action state by feeding the encoder with concatenated action input
     VB_enc_final_state = encoder(VB_input,
-                                 placeholders["V_len"], 
+                                 placeholders["V_len"],
                                  n_units=VB_num_units,
                                  n_layers=VB_num_layers,
                                  scope="VB_encoder")
 
     # Binding layer
-    L_shared = fc(L_enc_final_state, SHARE_DIM,            # Feed the final description state into a feedforward layer (output: z_dsc)
+    L_shared = fc(L_enc_final_state, SHARE_DIM,
+                  # Feed the final description state into a feedforward layer (output: z_dsc)
                   activation_fn=None, scope="L_share")
-    VB_shared = fc(VB_enc_final_state, SHARE_DIM,          # Feed the final action state into a feedforward layer (output: z_act)
+    VB_shared = fc(VB_enc_final_state, SHARE_DIM,
+                   # Feed the final action state into a feedforward layer (output: z_act)
                    activation_fn=None, scope="VB_share")
 
     # Get the initial decoding states
-    L_dec_init_state = fc(L_shared, L_num_units*L_num_layers*2,      # Initial decoder state for descriptions (h0_dec)
+    L_dec_init_state = fc(L_shared, L_num_units * L_num_layers * 2,  # Initial decoder state for descriptions (h0_dec)
                           activation_fn=None, scope="L_postshare")
-    VB_dec_init_state = fc(VB_shared, VB_num_units*VB_num_layers*2,     # Initial decoder state for actions (h0_dec)
+    VB_dec_init_state = fc(VB_shared, VB_num_units * VB_num_layers * 2,  # Initial decoder state for actions (h0_dec)
                            activation_fn=None, scope="VB_postshare")
 
     # Decoding
-    L_output = L_decoder(placeholders["L_fw"][0],          # Get the reconstructed description via the language decoder
+    L_output = L_decoder(placeholders["L_fw"][0],  # Get the reconstructed description via the language decoder
                          L_dec_init_state,
                          length=L_shape[0],
                          out_dim=L_shape[2],
                          n_units=L_num_units,
                          n_layers=L_num_layers,
                          scope="L_decoder")
-    B_output = VB_decoder(placeholders["V_fw"],           # Get the reconstructed action via the action decoder
+    B_output = VB_decoder(placeholders["V_fw"],  # Get the reconstructed action via the action decoder
                           placeholders["B_fw"][0],
                           VB_dec_init_state,
                           length=B_shape[0],
@@ -130,20 +138,20 @@ def main():
 
     # Calculate the losses
     with tf.name_scope('loss'):
-        L_output = L_output # no need to multiply binary array
+        L_output = L_output  # no need to multiply binary array
         B_output = B_output * placeholders["B_bin"][1:]
-        L_loss = tf.reduce_mean(-tf.reduce_sum(placeholders["L_fw"][1:]*tf.log(L_output),    # description loss
-                                               reduction_indices=[2])) 
-        B_loss = tf.reduce_mean(tf.square(B_output-placeholders["B_fw"][1:]))           # action loss (MSE)
-        share_loss = aligned_discriminative_loss(L_shared, VB_shared)                   # binding loss
-        loss = net_conf.L_weight*L_loss + net_conf.B_weight*B_loss + net_conf.S_weight*share_loss   # total loss
+        L_loss = tf.reduce_mean(-tf.reduce_sum(placeholders["L_fw"][1:] * tf.log(L_output),  # description loss
+                                               reduction_indices=[2]))
+        B_loss = tf.reduce_mean(tf.square(B_output - placeholders["B_fw"][1:]))  # action loss (MSE)
+        share_loss = aligned_discriminative_loss(L_shared, VB_shared)  # binding loss
+        loss = net_conf.L_weight * L_loss + net_conf.B_weight * B_loss + net_conf.S_weight * share_loss  # total loss
 
     loss_sum = tf.summary.scalar('Loss', loss)  # Loss summary to write to Tensorboard
     test_loss = tf.summary.scalar('Test Loss', loss)  # Test loss summary to write to Tensorboard
     # Graph for update operations
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        train_step = tf.train.AdamOptimizer(learning_rate=train_conf.learning_rate).minimize(loss)       # Use Adam Optimiser
+        train_step = tf.train.AdamOptimizer(learning_rate=train_conf.learning_rate).minimize(loss)  # Use Adam Optimiser
 
     # Use GPU
     gpuConfig = tf.ConfigProto(
@@ -156,11 +164,11 @@ def main():
 
     # Launch the graph in a session
     sess = tf.Session(config=gpuConfig)
-    sess.run(tf.global_variables_initializer())    # run the session
-    saver = tf.train.Saver(tf.global_variables())   # create a saver for the model
+    sess.run(tf.global_variables_initializer())  # run the session
+    saver = tf.train.Saver(tf.global_variables())  # create a saver for the model
 
     # Training
-    previous = time.time()      # time the training
+    previous = time.time()  # time the training
     for step in range(num_of_iterations):
         batch_idx = np.random.permutation(B_shape[1])[:batchsize]
         feed_dict = {placeholders["L_fw"]: L_fw[:, batch_idx, :],
@@ -172,17 +180,17 @@ def main():
                      placeholders["B_bin"]: B_bin[:, batch_idx, :],
                      placeholders["L_len"]: L_len[batch_idx],
                      placeholders["V_len"]: V_len[batch_idx]}
-                    
+
         _, l, b, s, t, l_sum = sess.run([train_step,
-                                  L_loss,
-                                  B_loss,
-                                  share_loss,
-                                  loss, loss_sum],
-                                 feed_dict=feed_dict)
+                                         L_loss,
+                                         B_loss,
+                                         share_loss,
+                                         loss, loss_sum],
+                                        feed_dict=feed_dict)
         print("step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s))
         writer.add_summary(l_sum, step)
         # Do the same for the test set
-        if train_conf.test and (step+1) % train_conf.test_interval == 0:
+        if train_conf.test and (step + 1) % train_conf.test_interval == 0:
             batch_idx = np.random.permutation(B_shape_u[1])[:batchsize]
             feed_dict = {placeholders["L_fw"]: L_fw_u[:, batch_idx, :],
                          placeholders["B_fw"]: B_fw_u[:, batch_idx, :],
@@ -193,9 +201,9 @@ def main():
                          placeholders["B_bin"]: B_bin_u[:, batch_idx, :],
                          placeholders["L_len"]: L_len_u[batch_idx],
                          placeholders["V_len"]: V_len_u[batch_idx]}
-            
+
             l, b, s, t, t_loss = sess.run([L_loss, B_loss, share_loss, loss, test_loss],
-                                  feed_dict=feed_dict)
+                                          feed_dict=feed_dict)
             print("test")
             print("step:{} total:{}, language:{}, behavior:{}, share:{}".format(step, t, l, b, s))
             writer.add_summary(t_loss, step)
@@ -204,6 +212,8 @@ def main():
     writer.flush()
     writer.close()
     past = time.time()
-    print(past-previous)     # print the elapsed time
+    print(past - previous)  # print the elapsed time
+
+
 if __name__ == "__main__":
     main()

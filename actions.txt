@@ -1,72 +1,72 @@
-PUSH-L-SLOW
-PULL-L-SLOW
-SLIDE-L-SLOW
-PUSH-R-SLOW
-PULL-R-SLOW
-SLIDE-R-SLOW
-PUSH-L-SLOW
-PULL-L-SLOW
-SLIDE-L-SLOW
-PUSH-R-SLOW
-PULL-R-SLOW
-SLIDE-R-SLOW
-PUSH-L-SLOW
-PULL-L-SLOW
-SLIDE-L-SLOW
-PUSH-R-SLOW
-PULL-R-SLOW
-SLIDE-R-SLOW
-PUSH-L-SLOW
-PULL-L-SLOW
-SLIDE-L-SLOW
-PUSH-R-SLOW
-PULL-R-SLOW
-SLIDE-R-SLOW
-PUSH-L-SLOW
-PULL-L-SLOW
-SLIDE-L-SLOW
-PUSH-R-SLOW
-PULL-R-SLOW
-SLIDE-R-SLOW
-PUSH-L-SLOW
-PULL-L-SLOW
-SLIDE-L-SLOW
-PUSH-R-SLOW
-PULL-R-SLOW
-SLIDE-R-SLOW
-PUSH-L-FAST
-PULL-L-FAST
-SLIDE-L-FAST
-PUSH-R-FAST
-PULL-R-FAST
-SLIDE-R-FAST
-PUSH-L-FAST
-PULL-L-FAST
-SLIDE-L-FAST
-PUSH-R-FAST
-PULL-R-FAST
-SLIDE-R-FAST
-PUSH-L-FAST
-PULL-L-FAST
-SLIDE-L-FAST
-PUSH-R-FAST
-PULL-R-FAST
-SLIDE-R-FAST
-PUSH-L-FAST
-PULL-L-FAST
-SLIDE-L-FAST
-PUSH-R-FAST
-PULL-R-FAST
-SLIDE-R-FAST
-PUSH-L-FAST
-PULL-L-FAST
-SLIDE-L-FAST
-PUSH-R-FAST
-PULL-R-FAST
-SLIDE-R-FAST
-PUSH-L-FAST
-PULL-L-FAST
-SLIDE-L-FAST
-PUSH-R-FAST
-PULL-R-FAST
-SLIDE-R-FAST
+PUSH-L-SLOW            train
+PULL-L-SLOW            train
+SLIDE-L-SLOW           test
+PUSH-R-SLOW            train
+PULL-R-SLOW            train
+SLIDE-R-SLOW           train
+PUSH-L-SLOW             test
+PULL-L-SLOW            train
+SLIDE-L-SLOW           train
+PUSH-R-SLOW             test
+PULL-R-SLOW            train
+SLIDE-R-SLOW           train
+PUSH-L-SLOW            train
+PULL-L-SLOW            train
+SLIDE-L-SLOW            test
+PUSH-R-SLOW            train
+PULL-R-SLOW            train
+SLIDE-R-SLOW            test
+PUSH-L-SLOW             train
+PULL-L-SLOW             train
+SLIDE-L-SLOW            train
+PUSH-R-SLOW             train
+PULL-R-SLOW             train
+SLIDE-R-SLOW            train
+PUSH-L-SLOW             train
+PULL-L-SLOW             test
+SLIDE-L-SLOW            train
+PUSH-R-SLOW             train
+PULL-R-SLOW             train
+SLIDE-R-SLOW            train
+PUSH-L-SLOW             train
+PULL-L-SLOW             test
+SLIDE-L-SLOW            train
+PUSH-R-SLOW             test
+PULL-R-SLOW             test
+SLIDE-R-SLOW            train
+PUSH-L-FAST             train
+PULL-L-FAST             train
+SLIDE-L-FAST            test
+PUSH-R-FAST             train
+PULL-R-FAST             test
+SLIDE-R-FAST            test
+PUSH-L-FAST             test
+PULL-L-FAST             test
+SLIDE-L-FAST            test
+PUSH-R-FAST             test
+PULL-R-FAST             train
+SLIDE-R-FAST            train
+PUSH-L-FAST             test
+PULL-L-FAST             train
+SLIDE-L-FAST            train
+PUSH-R-FAST             train
+PULL-R-FAST             train
+SLIDE-R-FAST            train
+PUSH-L-FAST             train
+PULL-L-FAST             train
+SLIDE-L-FAST            train
+PUSH-R-FAST             train
+PULL-R-FAST             test
+SLIDE-R-FAST            train
+PUSH-L-FAST             train
+PULL-L-FAST             train
+SLIDE-L-FAST            train
+PUSH-R-FAST             train
+PULL-R-FAST             train
+SLIDE-R-FAST            train
+PUSH-L-FAST             train
+PULL-L-FAST             train
+SLIDE-L-FAST            train
+PUSH-R-FAST             train
+PULL-R-FAST             train
+SLIDE-R-FAST            train
