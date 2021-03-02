@@ -5,16 +5,23 @@ from config import NetConfig, TrainConfig
 from data_util import read_sequential_target, save_latent
 from modules import *
 
+def sampling(mean, log_sigma, scope="sampling"):
+    with tf.variable_scope(scope, reuse=False):
+        z_mean, z_log_sigma = mean, log_sigma
+        epsilon = tf.keras.backend.random_normal(shape=(z_mean.shape[0].value, z_mean.shape[1].value),
+                                                 mean=0.0, stddev=0.1)
+    return z_mean + tf.exp(0.5*z_log_sigma) * epsilon
+
 # Reproduce the actions without descriptions
 def main():
     # get the network configuration (parameters such as number of layers and units)
     net_conf = NetConfig()
-    net_conf.set_conf("../train/net_conf.txt")
+    net_conf.set_conf("../train/vae_conf.txt")
     L_num_units = net_conf.L_num_units
     L_num_layers = net_conf.L_num_layers
     VB_num_units = net_conf.VB_num_units
     VB_num_layers = net_conf.VB_num_layers
-    SHARE_DIM = net_conf.S_dim
+    LATENT_DIM = net_conf.S_dim
 
     # get the training configuration
     train_conf = TrainConfig()
@@ -67,9 +74,13 @@ def main():
                                  scope="VB_encoder")
 
     # Binding layer
-    VB_shared = fc(VB_enc_final_state, SHARE_DIM,          # Feed the final action state into a feedforward layer (output: z_act)
-                  activation_fn=None, scope="VB_share")
-    VB_dec_init_state = fc(VB_shared, VB_num_units*VB_num_layers*2,       # Initial decoder state for actions (h0_dec)
+    # Latent space: get z_mean and z_log_sigma and sample them
+    VB_z_mean = fc(VB_enc_final_state, LATENT_DIM,
+                   activation_fn=None, scope="VB_z_mean")
+    VB_z_log_sigma = fc(VB_enc_final_state, LATENT_DIM,
+                   activation_fn=None, scope="VB_z_log_sigma")
+    VB_sampling = sampling(VB_z_mean, VB_z_log_sigma, scope='VB_sampling')
+    VB_dec_init_state = fc(VB_sampling, VB_num_units*VB_num_layers*2,       # Initial decoder state for actions (h0_dec)
                            activation_fn=None, scope="VB_postshare")
 
     # Decoding

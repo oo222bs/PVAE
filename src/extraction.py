@@ -10,12 +10,12 @@ from modules import *
 def main():
     # get the network configuration (parameters such as number of layers and units)
     net_conf = NetConfig()
-    net_conf.set_conf("../train/net_conf.txt")
+    net_conf.set_conf("../train/vae_conf.txt")
     L_num_units = net_conf.L_num_units
     L_num_layers = net_conf.L_num_layers
     VB_num_units = net_conf.VB_num_units
     VB_num_layers = net_conf.VB_num_layers
-    SHARE_DIM = net_conf.S_dim
+    LATENT_DIM = net_conf.S_dim
 
     # get the training configuration (batch size, initialisation, number of iterations, saving and loading directory)
     train_conf = TrainConfig()
@@ -36,9 +36,20 @@ def main():
     # get the joint angles and visual features for actions
     B_fw, B_bw, B_bin, B_len, B_filenames = read_sequential_target(B_data_dir, True)
     V_fw, V_bw, V_bin, V_len = read_sequential_target(V_data_dir)
-
+    # normalise the joint angles between -1 and 1
+    B_fw = 2 * ((B_fw - B_fw.min()) / (B_fw.max() - B_fw.min())) - 1
+    B_bw = 2 * ((B_bw - B_bw.min()) / (B_bw.max() - B_bw.min())) - 1
+    # normalise the visual features between -1 and 1
+    V_min = V_fw.min()
+    V_fw = 2 * ((V_fw - V_fw.min()) / (V_fw.max() - V_fw.min())) - 1
+    V_bw = 2 * ((V_bw - V_bw.min()) / (V_bw.max() - V_bw.min())) - 1
+    for i in range(6):
+        V_fw[50:, 54 + 108*i : 108 + 108*i, :] = 0
+        V_bw[50:, 54 + 108 * i: 108 + 108 * i, :] = 0
+        B_fw[50:, 54 + 108 * i: 108 + 108 * i, :] = 0
+        B_bw[50:, 54 + 108 * i: 108 + 108 * i, :] = 0
     # create variables for data shapes
-    L_shape = L_fw.shape
+    L_shape = (L_fw.shape[0]//8,L_fw.shape[1],L_fw.shape[2])
     B_shape = B_fw.shape
     V_shape = V_fw.shape
 
@@ -51,7 +62,17 @@ def main():
         print(len(L_filenames_u))
         B_fw_u, B_bw_u, B_bin_u, B_len_u, B_filenames_u = read_sequential_target(B_data_dir_test, True)
         V_fw_u, V_bw_u, V_bin_u, V_len_u = read_sequential_target(V_data_dir_test)
-        L_shape_u = L_fw_u.shape
+        B_fw_u = 2 * ((B_fw_u - B_fw_u.min()) / (B_fw_u.max() - B_fw_u.min())) - 1
+        B_bw_u = 2 * ((B_bw_u - B_bw_u.min()) / (B_bw_u.max() - B_bw_u.min())) - 1
+        # normalise the visual features between -1 and 1
+        V_fw_u = 2 * ((V_fw_u - V_min) / (V_fw_u.max() - V_min)) - 1
+        V_bw_u = 2 * ((V_bw_u - V_min) / (V_bw_u.max() - V_min)) - 1
+        for i in range(6):
+            V_fw_u[50:, 18 + 36 * i: 36 + 36 * i, :] = 0
+            V_bw_u[50:, 18 + 36 * i: 36 + 36 * i, :] = 0
+            B_fw_u[50:, 18 + 36 * i: 36 + 36 * i, :] = 0
+            B_bw_u[50:, 18 + 36 * i: 36 + 36 * i, :] = 0
+        L_shape_u = (L_fw_u.shape[0]//8,L_fw_u.shape[1],L_fw_u.shape[2])
         B_shape_u = B_fw_u.shape
         V_shape_u = V_fw_u.shape
         
@@ -80,11 +101,11 @@ def main():
                                  n_layers=VB_num_layers,
                                  scope="VB_encoder")
 
-    # Binding layer
-    L_shared = fc(L_enc_final_state, SHARE_DIM,           # Feed the final description state into a feedforward layer (output: z_dsc)
-                  activation_fn=None, scope="L_share")
-    VB_shared = fc(VB_enc_final_state, SHARE_DIM,         # Feed the final action state into a feedforward layer (output: z_act)
-                   activation_fn=None, scope="VB_share")
+    # Latent space: get z_mean and z_log_sigma and sample them
+    L_z_mean = fc(L_enc_final_state, LATENT_DIM,
+                  activation_fn=None, scope="L_z_mean")
+    VB_z_mean = fc(VB_enc_final_state, LATENT_DIM,
+                   activation_fn=None, scope="VB_z_mean")
 
     # Use GPU
     gpuConfig = tf.ConfigProto(
@@ -99,38 +120,90 @@ def main():
 
     # Feed the dataset as input
     for i in range(B_shape[1]):
-        feed_dict = {placeholders["L_fw"]: L_fw[:, i:i+1, :],
+        #sentence_idx = np.random.randint(8)
+        sentence_idx = 7
+        if sentence_idx == 0:
+            L_fw_feed = L_fw[0:5, i:i + 1, :]
+            L_bw_feed = L_bw[35:40, i:i + 1, :]
+        elif sentence_idx == 1:
+            L_fw_feed = L_fw[5:10, i:i + 1, :]
+            L_bw_feed = L_bw[30:35, i:i + 1, :]
+        elif sentence_idx == 2:
+            L_fw_feed = L_fw[10:15, i:i + 1, :]
+            L_bw_feed = L_bw[25:30, i:i + 1, :]
+        elif sentence_idx == 3:
+            L_fw_feed = L_fw[15:20, i:i + 1, :]
+            L_bw_feed = L_bw[20:25, i:i + 1, :]
+        elif sentence_idx == 4:
+            L_fw_feed = L_fw[20:25, i:i + 1, :]
+            L_bw_feed = L_bw[15:20, i:i + 1, :]
+        elif sentence_idx == 5:
+            L_fw_feed = L_fw[25:30, i:i + 1, :]
+            L_bw_feed = L_bw[10:15, i:i + 1, :]
+        elif sentence_idx == 6:
+            L_fw_feed = L_fw[30:35, i:i + 1, :]
+            L_bw_feed = L_bw[5:10, i:i + 1, :]
+        else:
+            L_fw_feed = L_fw[35:40, i:i + 1, :]
+            L_bw_feed = L_bw[0:5, i:i + 1, :]
+        feed_dict = {placeholders["L_fw"]: L_fw_feed,
                      placeholders["B_fw"]: B_fw[:, i:i+1, :],
                      placeholders["V_fw"]: V_fw[:, i:i+1, :],
-                     placeholders["L_bw"]: L_bw[:, i:i+1, :],
+                     placeholders["L_bw"]: L_bw_feed,
                      placeholders["B_bw"]: B_bw[:, i:i+1, :],
                      placeholders["V_bw"]: V_bw[:, i:i+1, :],
                      placeholders["B_bin"]: B_bin[:, i:i+1, :],
-                     placeholders["L_len"]: L_len[i:i+1],
+                     placeholders["L_len"]: L_len[i:i+1]/8,
                      placeholders["V_len"]: V_len[i:i+1]}
 
-        L_enc, VB_enc = sess.run([L_shared, VB_shared],
+        L_enc, VB_enc = sess.run([L_z_mean, VB_z_mean],
                                   feed_dict=feed_dict)
-        save_latent(L_enc, L_filenames[i])             # save the binding features for description
-        save_latent(VB_enc, B_filenames[i])            # save the binding features for actions
+        save_latent(L_enc, L_filenames[i], dirname='latent_7')             # save the binding features for description
+        save_latent(VB_enc, B_filenames[i], dirname='latent_7')            # save the binding features for actions
         print(B_filenames[i])
 
     # Do the same for the test set
     if train_conf.test:
         for i in range(B_shape_u[1]):
-            feed_dict = {placeholders["L_fw"]: L_fw_u[:, i:i+1, :],
+            #sentence_idx = np.random.randint(8)
+            sentence_idx = 7
+            if sentence_idx == 0:
+                L_fw_feed_u = L_fw_u[0:5, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[35:40, i:i + 1, :]
+            elif sentence_idx == 1:
+                L_fw_feed_u = L_fw_u[5:10, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[30:35, i:i + 1, :]
+            elif sentence_idx == 2:
+                L_fw_feed_u = L_fw_u[10:15, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[25:30, i:i + 1, :]
+            elif sentence_idx == 3:
+                L_fw_feed_u = L_fw_u[15:20, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[20:25, i:i + 1, :]
+            elif sentence_idx == 4:
+                L_fw_feed_u = L_fw_u[20:25, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[15:20, i:i + 1, :]
+            elif sentence_idx == 5:
+                L_fw_feed_u = L_fw_u[25:30, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[10:15, i:i + 1, :]
+            elif sentence_idx == 6:
+                L_fw_feed_u = L_fw_u[30:35, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[5:10, i:i + 1, :]
+            else:
+                L_fw_feed_u = L_fw_u[35:40, i:i + 1, :]
+                L_bw_feed_u = L_bw_u[0:5, i:i + 1, :]
+            feed_dict = {placeholders["L_fw"]:L_fw_feed_u,
                          placeholders["B_fw"]: B_fw_u[:, i:i+1, :],
                          placeholders["V_fw"]: V_fw_u[:, i:i+1, :],
-                         placeholders["L_bw"]: L_bw_u[:, i:i+1, :],
+                         placeholders["L_bw"]: L_bw_feed_u,
                          placeholders["B_bw"]: B_bw_u[:, i:i+1, :],
                          placeholders["V_bw"]: V_bw_u[:, i:i+1, :],
                          placeholders["B_bin"]: B_bin_u[:, i:i+1, :],
-                         placeholders["L_len"]: L_len_u[i:i+1],
+                         placeholders["L_len"]: L_len_u[i:i+1]/8,
                          placeholders["V_len"]: V_len_u[i:i+1]}
-            L_enc, VB_enc = sess.run([L_shared, VB_shared],
+            L_enc, VB_enc = sess.run([L_z_mean, VB_z_mean],
                                      feed_dict=feed_dict)
-            save_latent(L_enc, L_filenames_u[i])        # save the binding features for description
-            save_latent(VB_enc, B_filenames_u[i])       # save the binding features for actions
+            save_latent(L_enc, L_filenames_u[i], dirname='latent_7')        # save the binding features for description
+            save_latent(VB_enc, B_filenames_u[i], dirname='latent_7')       # save the binding features for actions
             print(B_filenames_u[i])
 
 if __name__ == "__main__":

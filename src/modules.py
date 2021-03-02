@@ -170,4 +170,4 @@ def aligned_discriminative_loss(X, Y, margin=1.0):
     x_diff = x_diff * mask
     y_diff = y_diff * mask
     
-    return tf.reduce_mean(x_diff) + tf.reduce_mean(y_diff) + tf.reduce_mean(pair_loss)  # returen the binding loss
+    return tf.reduce_mean(x_diff) + tf.reduce_mean(y_diff) + tf.reduce_mean(pair_loss)  # return the binding loss

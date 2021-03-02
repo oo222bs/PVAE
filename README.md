@@ -1,12 +1,14 @@
-# Paired Recurrent Autoencoders
+# Paired Variational Autoencoders
 
-Paired Recurrent Autoencoders
+Paired Variational Autoencoders
 
-Last updated: 16 November, 2020.
+Last updated: 2 March, 2021.
 
-Copyright (c) 2018, Tatsuro Yamada <<yamadat@idr.ias.sci.waseda.ac.jp>>
+This code has been adapted from Copyright (c) 2018, Tatsuro Yamada <<yamadat@idr.ias.sci.waseda.ac.jp>>
 
-Change 2020, Ozan Özdemir <<oezdemir@informatik.uni-hamburg.de>>
+Original repository: https://github.com/ogata-lab/PRAE/
+
+Copyright (c) 2021, Ozan Özdemir <<oezdemir@informatik.uni-hamburg.de>>
 
 ## Requirements
 - Python 3.6
@@ -14,14 +16,14 @@ Change 2020, Ozan Özdemir <<oezdemir@informatik.uni-hamburg.de>>
 - NumPy 1.19
 
 ## Implementation
-Paired Recurrent Autoencoders
+Paired Variational Autoencoders
 
 ## Example
 ```
 $ cd src
 $ python learn.py
 ```
-- learn.py: trains a model.
+- learn_pvae.py: trains the model.
 - generation.py: translates instructions to actions.
 - recognition.py: translates actions to descriptions.
 - extraction.py: extracts shared representations.
